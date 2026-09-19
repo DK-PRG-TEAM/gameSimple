@@ -1,11 +1,18 @@
 # Source: GitHub starter workflow "Simple workflow" (MIT) — https://github.com/actions/starter-workflows/blob/main/ci/blank.yml
+#
+# This repository has no build tool: the sources are plain .java files under
+# src/, so the JDK preinstalled on the runner compiles them directly and no
+# setup action is needed.
+#
+# No step here has any effect outside the repository: nothing is published,
+# deployed or posted anywhere.
 name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [master]
   workflow_dispatch:
 
 # The workflow token is read-only by default.
@@ -41,7 +48,8 @@ jobs:
           fi
           echo "All actions are pinned to full-length commit SHAs."
 
-      # Add your project's linters below this line.
+      - name: Compile with every javac warning turned on
+        run: javac -Xlint:all -Werror -encoding UTF-8 -d "$RUNNER_TEMP/lint" src/*.java
 
   test:
     name: Test
@@ -52,7 +60,11 @@ jobs:
         with:
           persist-credentials: false
 
-      # Replace the step below with your project's test command. Pin any setup
-      # action you add to a full commit SHA, like the checkout step above.
-      - name: Run tests
-        run: echo "No tests yet. Replace this step with your project's test command."
+      - name: Compile the sources
+        run: javac -encoding UTF-8 -d build src/*.java
+
+      - name: Compile the smoke test
+        run: javac -encoding UTF-8 -cp build -d build tests/SmokeTest.java
+
+      - name: Run the smoke test
+        run: java -ea -cp build SmokeTest
